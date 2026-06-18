@@ -1,0 +1,6 @@
+{
+  "testEnvironment": "node",
+  "testMatch": ["**/__tests__/**/*.test.js"],
+  "collectCoverageFrom": ["controllers/**/*.js", "models/**/*.js", "middleware/**/*.js"],
+  "setupFiles": ["dotenv/config"]
+}
