@@ -41,11 +41,7 @@ console.log("MONGODB_URI =", process.env.MONGODB_URI);
 // Connect DB
 connectDB();
 
-// Create uploads directory
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+
 
 // Security middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -77,8 +73,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Static files
-app.use('/uploads', express.static(uploadsDir));
+
 
 // API Routes
 app.use('/api/auth', authRoutes);
