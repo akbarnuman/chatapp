@@ -76,7 +76,7 @@ const updateUser = async (req, res) => {
     }
 
     if (bio !== undefined) updates.bio = bio;
-    if (req.file) updates.profilePicture = `/uploads/${req.file.filename}`;
+    if (req.file) updates.profilePicture = req.file.path;
 
     const user = await User.findByIdAndUpdate(req.params.id, updates, {
       new: true,

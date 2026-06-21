@@ -1,20 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const { protect } = require('../middleware/auth');
 const { getUsers, getUserById, updateUser, blockUser } = require('../controllers/userController');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `avatar-${uniqueSuffix}${path.extname(file.originalname)}`);
+// ✅ Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// ✅ Cloudinary storage — disk ki jagah
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'chat-app/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 400, height: 400, crop: 'fill' }], // auto resize
   },
 });
 
 const upload = multer({
-  storage,
+  storage,  // ← bas yahi change hua
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
