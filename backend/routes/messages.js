@@ -8,18 +8,15 @@ const {
   getMessages, sendMessage, deleteMessage, reactToMessage, pinMessage, markRead
 } = require('../controllers/messageController');
 
-// ✅ Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary,
   params: (req, file) => {
-    // Video/audio alag folder mein
     const isVideo = file.mimetype.startsWith('video/') || file.mimetype.startsWith('audio/');
     return {
       folder: isVideo ? 'chat-app/videos' : 'chat-app/files',
@@ -39,4 +36,6 @@ router.post('/', protect, upload.single('file'), sendMessage);
 router.delete('/:id', protect, deleteMessage);
 router.post('/:id/react', protect, reactToMessage);
 router.post('/:id/pin', protect, pinMessage);
-router.post('/read',
+router.post('/read', protect, markRead);
+
+module.exports = router;
