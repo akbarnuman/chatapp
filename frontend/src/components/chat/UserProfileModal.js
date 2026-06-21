@@ -6,7 +6,7 @@ import { useChat } from '../../context/ChatContext';
 import Avatar from '../ui/Avatar';
 import toast from 'react-hot-toast';
 
-const UPLOADS = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const UPLOADS = process.env.REACT_APP_SOCKET_URL || 'https://chatapp-sim5.onrender.com';
 
 export default function UserProfileModal({ userId, onClose, onStartChat }) {
   const [profile, setProfile] = useState(null);

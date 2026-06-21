@@ -1,5 +1,5 @@
 import React from 'react';
-const UPLOADS = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const UPLOADS = process.env.REACT_APP_SOCKET_URL || 'https://chatapp-sim5.onrender.com';
 
 const colors = ['bg-purple-500','bg-blue-500','bg-emerald-500','bg-rose-500','bg-amber-500','bg-indigo-500','bg-pink-500','bg-teal-500'];
 const getColor = (name='') => colors[name.charCodeAt(0) % colors.length];

@@ -119,8 +119,12 @@ cp frontend/.env.example frontend/.env
 cd backend
 npm install
 npm run dev
+
 # Runs on http://localhost:5000
 # runs live on https://chatapp-sim5.onrender.com
+
+
+
 ```
 
 ### 3. Frontend
@@ -149,7 +153,7 @@ docker-compose down -v
 
 Services:
 - Frontend: http://localhost:3000
-- Backend: http://localhost:5000
+- Backend: https://chatapp-sim5.onrender.com
 - MongoDB: localhost:27017
 
 ---
@@ -292,8 +296,8 @@ NODE_ENV=development
 
 ### Frontend (`frontend/.env`)
 ```
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_SOCKET_URL=http://localhost:5000
+REACT_APP_API_URL=https://chatapp-sim5.onrender.com/api
+REACT_APP_SOCKET_URL=https://chatapp-sim5.onrender.com
 ```
 
 ---

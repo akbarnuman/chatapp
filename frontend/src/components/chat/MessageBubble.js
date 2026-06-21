@@ -4,7 +4,7 @@ import { emitReaction, emitDeleteMessage } from '../../services/socket';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../ui/Avatar';
 
-const UPLOADS = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const UPLOADS = process.env.REACT_APP_SOCKET_URL || 'https://chatapp-sim5.onrender.com';
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 export default function MessageBubble({ 
