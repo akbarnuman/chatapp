@@ -5,6 +5,7 @@ import { emitTyping, emitStopTyping, emitMarkRead } from '../../services/socket'
 import { messageAPI } from '../../services/api';
 import MessageBubble from './MessageBubble';
 import Avatar from '../ui/Avatar';
+import UserProfileModal from './UserProfileModal';
 import EmojiPicker from 'emoji-picker-react';
 import toast from 'react-hot-toast';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -17,11 +18,15 @@ function dateSeparator(date) {
 }
 
 export default function ChatWindow() {
+  const [activeReactionId, setActiveReactionId] = useState(null);
   const { activeConversation, messages, typingUsers, loadMessages, hasMore, page, onlineUsers, setMessages } = useChat();
   const { user } = useAuth();
   const [input, setInput] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [viewingUserId, setViewingUserId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const bottomRef = useRef(null);
@@ -29,6 +34,16 @@ export default function ChatWindow() {
   const typingTimer = useRef(null);
   const mediaRecorder = useRef(null);
   const fileInputRef = useRef(null);
+
+  const [waveform, setWaveform] = useState([]);
+const audioContext = useRef(null);
+const analyser = useRef(null);
+const animationFrame = useRef(null);
+
+  const [recordingTime, setRecordingTime] = useState(0);
+  const recordingTimer = useRef(null);
+
+  
 
   const other = activeConversation?.isGroup ? null
     : activeConversation?.participants?.find(p => p._id !== user._id);
@@ -96,6 +111,28 @@ export default function ChatWindow() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioContext.current = new AudioContext();
+
+const source = audioContext.current.createMediaStreamSource(stream);
+
+analyser.current = audioContext.current.createAnalyser();
+analyser.current.fftSize = 64;
+
+source.connect(analyser.current);
+
+const dataArray = new Uint8Array(analyser.current.frequencyBinCount);
+
+const updateWaveform = () => {
+  analyser.current.getByteFrequencyData(dataArray);
+
+  const values = Array.from(dataArray).slice(0, 20);
+
+  setWaveform(values);
+
+  animationFrame.current = requestAnimationFrame(updateWaveform);
+};
+
+updateWaveform();
       const chunks = [];
       mediaRecorder.current = new MediaRecorder(stream);
       mediaRecorder.current.ondataavailable = e => chunks.push(e.data);
@@ -112,15 +149,36 @@ export default function ChatWindow() {
         } catch { toast.error('Failed to send voice message'); }
         finally { setUploading(false); }
       };
-      mediaRecorder.current.start();
+      mediaRecorder.current.start(1000);
       setIsRecording(true);
+      setRecordingTime(0);
+
+recordingTimer.current = setInterval(() => {
+  setRecordingTime(prev => prev + 1);
+}, 1000);
     } catch { toast.error('Microphone access denied'); }
   };
 
   const stopRecording = () => {
-    mediaRecorder.current?.stop();
-    setIsRecording(false);
-  };
+  if (
+    mediaRecorder.current &&
+    mediaRecorder.current.state !== 'inactive'
+  ) {
+    mediaRecorder.current.stop();
+  }
+
+  clearInterval(recordingTimer.current);
+  recordingTimer.current = null;
+
+  setIsRecording(false);
+  cancelAnimationFrame(animationFrame.current);
+
+if (audioContext.current) {
+  audioContext.current.close();
+}
+
+setWaveform([]);
+};
 
   const loadMore = () => loadMessages(activeConversation._id, page + 1);
 
@@ -149,16 +207,30 @@ export default function ChatWindow() {
     grouped.push({ type: 'msg', data: m });
   });
 
+  const filteredGrouped = grouped.filter(item => {
+  if (!searchText.trim()) return true;
+
+  if (item.type === 'date') return true;
+
+  return item.data.content
+    ?.toLowerCase()
+    .includes(searchText.toLowerCase());
+});
+
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-950">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-800 bg-gray-900 flex items-center gap-3">
-        <Avatar user={activeConversation.isGroup ? { username: activeConversation.groupName } : other}
-          showOnline isOnline={isOtherOnline} />
+        <button onClick={() => !activeConversation.isGroup && other && setViewingUserId(other._id)}
+          className={!activeConversation.isGroup ? 'cursor-pointer' : 'cursor-default'}>
+          <Avatar user={activeConversation.isGroup ? { username: activeConversation.groupName } : other}
+            showOnline isOnline={isOtherOnline} />
+        </button>
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-white text-sm truncate">
+          <button onClick={() => !activeConversation.isGroup && other && setViewingUserId(other._id)}
+            className={`font-semibold text-white text-sm truncate block ${!activeConversation.isGroup ? 'hover:text-emerald-400 transition' : ''}`}>
             {activeConversation.isGroup ? activeConversation.groupName : other?.username}
-          </h2>
+          </button>
           <p className="text-xs text-gray-400">
             {activeConversation.isGroup
               ? `${activeConversation.participants?.length} members`
@@ -166,7 +238,19 @@ export default function ChatWindow() {
             }
           </p>
         </div>
-        <button className="w-8 h-8 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg flex items-center justify-center transition">
+        <button
+  onClick={() => setSearchOpen(prev => !prev)}
+  className="w-8 h-8 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg flex items-center justify-center transition"
+>
+  {searchOpen && (
+  <input
+    autoFocus
+    value={searchText}
+    onChange={(e) => setSearchText(e.target.value)}
+    placeholder="Search messages..."
+    className="absolute top-14 right-4 bg-gray-800 text-white text-sm px-3 py-2 rounded-lg border border-gray-700 outline-none"
+  />
+)}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
@@ -191,12 +275,20 @@ export default function ChatWindow() {
           </div>
         )}
 
-        {grouped.map((item, i) => item.type === 'date'
+        
+
+        {filteredGrouped.map((item, i) => item.type === 'date'
           ? <div key={i} className="text-center py-3"><span className="text-xs text-gray-500 bg-gray-800/80 px-3 py-1 rounded-full">{item.label}</span></div>
-          : <MessageBubble key={item.data._id || item.data.tempId} message={item.data}
-              conversationId={activeConversation._id}
-              onReply={setReplyTo}
-              isGroup={activeConversation.isGroup} />
+          : <MessageBubble 
+    key={item.data._id || item.data.tempId}
+    message={item.data}
+    conversationId={activeConversation._id}
+    onReply={setReplyTo}
+    isGroup={activeConversation.isGroup}
+    onSenderClick={(uid) => setViewingUserId(uid)}
+    activeReactionId={activeReactionId}
+    setActiveReactionId={setActiveReactionId}
+/>
         )}
 
         {currentTyping && (
@@ -233,6 +325,13 @@ export default function ChatWindow() {
         </div>
       )}
 
+      {viewingUserId && (
+        <UserProfileModal
+          userId={viewingUserId}
+          onClose={() => setViewingUserId(null)}
+        />
+      )}
+
       {/* Input */}
       <div className="p-4 border-t border-gray-800 bg-gray-900">
         {showEmoji && (
@@ -262,7 +361,28 @@ export default function ChatWindow() {
             style={{ height: 'auto' }}
             onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px'; }}
           />
+{isRecording && (
+  <div className="flex items-center gap-1 px-2">
 
+    <span className="text-red-400 text-sm">
+      🔴 {Math.floor(recordingTime / 60)}:
+      {(recordingTime % 60).toString().padStart(2,'0')}
+    </span>
+
+    <div className="flex items-center gap-[2px] h-6">
+      {waveform.map((value, index) => (
+        <span
+          key={index}
+          className="w-[3px] bg-emerald-400 rounded-full transition-all"
+          style={{
+            height: `${Math.max(4, value / 3)}px`
+          }}
+        />
+      ))}
+    </div>
+
+  </div>
+)}
           {input.trim() ? (
             <button onClick={handleSend}
               className="w-10 h-10 bg-emerald-500 hover:bg-emerald-400 rounded-full flex items-center justify-center transition flex-shrink-0 shadow-lg shadow-emerald-500/25">
@@ -271,8 +391,20 @@ export default function ChatWindow() {
               </svg>
             </button>
           ) : (
-            <button onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={isRecording ? stopRecording : undefined}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition flex-shrink-0 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}`}>
+            <button
+  onClick={() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }}
+  className={`w-10 h-10 rounded-full flex items-center justify-center transition flex-shrink-0 ${
+    isRecording
+      ? 'bg-red-500 animate-pulse'
+      : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+  }`}
+>
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
               </svg>

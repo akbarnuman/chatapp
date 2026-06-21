@@ -6,6 +6,7 @@ import { userAPI } from '../../services/api';
 import Avatar from '../ui/Avatar';
 import NewChatModal from './NewChatModal';
 import ProfileModal from './ProfileModal';
+import UserProfileModal from './UserProfileModal';
 
 function formatTime(date) {
   if (!date) return '';
@@ -22,6 +23,7 @@ export default function Sidebar() {
   const [searchResults, setSearchResults] = useState([]);
   const [showNew, setShowNew] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
@@ -91,7 +93,9 @@ export default function Sidebar() {
             <p className="text-xs text-gray-500 px-2 py-1 font-medium uppercase tracking-wider">People</p>
             {searchResults.map(u => (
               <SearchUserItem key={u._id} u={u} onlineUsers={onlineUsers}
-                onSelect={() => { setSearch(''); }} user={user} />
+                onSelect={() => { setSearch(''); }}
+                onViewProfile={() => setViewingUserId(u._id)}
+                user={user} />
             ))}
           </div>
         )}
@@ -141,11 +145,12 @@ export default function Sidebar() {
 
       {showNew && <NewChatModal onClose={() => setShowNew(false)} />}
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+      {viewingUserId && <UserProfileModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />}
     </div>
   );
 }
 
-function SearchUserItem({ u, onlineUsers, onSelect, user: currentUser }) {
+function SearchUserItem({ u, onlineUsers, onSelect, onViewProfile, user: currentUser }) {
   const { createConversation, selectConversation } = useChat();
   const handle = async () => {
     const conv = await createConversation({ participantId: u._id });
@@ -153,12 +158,21 @@ function SearchUserItem({ u, onlineUsers, onSelect, user: currentUser }) {
     onSelect();
   };
   return (
-    <button onClick={handle} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800 rounded-xl transition text-left">
-      <Avatar user={u} showOnline isOnline={onlineUsers.has(u._id)} />
-      <div>
-        <p className="text-white text-sm font-medium">{u.username}</p>
-        <p className="text-gray-400 text-xs">{onlineUsers.has(u._id) ? 'Online' : 'Offline'}</p>
-      </div>
-    </button>
+    <div className="flex items-center gap-2 px-1">
+      <button onClick={handle} className="flex-1 flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800 rounded-xl transition text-left">
+        <Avatar user={u} showOnline isOnline={onlineUsers.has(u._id)} />
+        <div>
+          <p className="text-white text-sm font-medium">{u.username}</p>
+          <p className="text-gray-400 text-xs">{onlineUsers.has(u._id) ? 'Online' : 'Offline'}</p>
+        </div>
+      </button>
+      <button onClick={onViewProfile}
+        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-emerald-400 hover:bg-gray-800 rounded-lg transition flex-shrink-0"
+        title="View profile">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </button>
+    </div>
   );
 }
