@@ -13,6 +13,7 @@ export const initSocket = (token) => {
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
     transports: ['websocket', 'polling'],
+    path: '/socket.io',  // ✅ yeh add hua
   });
 
   socket.on('connect', () => console.log('🔌 Socket connected:', socket.id));
