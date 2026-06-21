@@ -12,6 +12,13 @@ const fs = require('fs');
 const connectDB = require('./config/database');
 const { socketHandler } = require('./socket/socketHandler');
 
+const path = require("path");
+
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
+
 // Routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
