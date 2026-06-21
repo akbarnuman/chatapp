@@ -26,7 +26,8 @@ const io = new Server(httpServer, {
   cors: {
     origin: [
   'http://localhost:3000',
-  'https://chatapp-livid-mu.vercel.app'
+  'https://chatapp-livid-mu.vercel.app',
+  'https://chatapp-9hs4u8wdn-akbarnuman.vercel.app'
 ],
     methods: ['GET', 'POST'],
     credentials: true,
@@ -51,7 +52,8 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin: [
   'http://localhost:3000',
-  'https://chatapp-livid-mu.vercel.app'
+  'https://chatapp-livid-mu.vercel.app',
+  'https://chatapp-9hs4u8wdn-akbarnuman.vercel.app'
 ],
   credentials: true,
 }));
