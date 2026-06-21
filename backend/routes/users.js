@@ -13,6 +13,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Cloudinary config ke baad yeh line add karo — temporarily
+console.log('Cloudinary config:', {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
+});
+
 // ✅ Cloudinary storage — disk ki jagah
 const storage = new CloudinaryStorage({
   cloudinary,
