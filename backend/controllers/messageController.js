@@ -76,7 +76,7 @@ const sendMessage = async (req, res) => {
     if (replyTo) messageData.replyTo = replyTo;
 
     if (req.file) {
-      messageData.fileUrl = `/uploads/${req.file.filename}`;
+      messageData.fileUrl = req.file.path;
       messageData.fileName = req.file.originalname;
       messageData.fileSize = req.file.size;
       messageData.mimeType = req.file.mimetype;
