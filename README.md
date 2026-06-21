@@ -120,6 +120,7 @@ cd backend
 npm install
 npm run dev
 # Runs on http://localhost:5000
+# runs live on https://chatapp-sim5.onrender.com
 ```
 
 ### 3. Frontend
