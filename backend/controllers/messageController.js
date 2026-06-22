@@ -76,13 +76,14 @@ const sendMessage = async (req, res) => {
     if (replyTo) messageData.replyTo = replyTo;
 
     if (req.file) {
-  messageData.fileUrl = req.file.secure_url || req.file.path; // ✅ secure_url pehle
-  messageData.fileName = req.file.originalname;
-  messageData.fileSize = req.file.size;
-  messageData.mimeType = req.file.mimetype;
-  messageData.type = req.file.mimetype.startsWith('image/') ? 'image'
-    : req.file.mimetype.startsWith('audio/') ? 'voice' : 'file';
-}
+      console.log('FULL FILE:', JSON.stringify(req.file)); // ← add kiya
+      messageData.fileUrl = req.file.secure_url || req.file.path;
+      messageData.fileName = req.file.originalname;
+      messageData.fileSize = req.file.size;
+      messageData.mimeType = req.file.mimetype;
+      messageData.type = req.file.mimetype.startsWith('image/') ? 'image'
+        : req.file.mimetype.startsWith('audio/') ? 'voice' : 'file';
+    }
 
     const message = await Message.create(messageData);
     await message.populate('sender', 'username profilePicture');
