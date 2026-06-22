@@ -72,12 +72,10 @@ const animationFrame = useRef(null);
   const handleSend = useCallback(() => {
     const text = input.trim();
     if (!text || !activeConversation) return;
-    const { sendMessage } = window.__chatCtx || {};
     emitStopTyping(activeConversation._id);
     setInput('');
     setReplyTo(null);
     setShowEmoji(false);
-    // Use socket directly via context
     const socket = require('../../services/socket').getSocket();
     if (!socket) return;
     const tempId = Date.now().toString();
@@ -87,9 +85,14 @@ const animationFrame = useRef(null);
       createdAt: new Date(), status: 'sent', replyTo, reactions: [], isPending: true,
     };
     setMessages(prev => [...prev, tempMsg]);
-    socket.emit('send_message', { conversationId: activeConversation._id, content: text, type: 'text', replyTo: replyTo?._id, tempId });
+    socket.emit('send_message', { 
+      conversationId: activeConversation._id, 
+      content: text, 
+      type: 'text', 
+      replyTo: replyTo?._id, 
+      tempId 
+    });
   }, [input, activeConversation, replyTo, user, setMessages]);
-
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };

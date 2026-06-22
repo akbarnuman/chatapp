@@ -140,9 +140,10 @@ export const ChatProvider = ({ children }) => {
     };
   }, [user, activeConversation, fetchConversations]);
 
-  const sendMessage = useCallback((content, type = 'text', replyTo = null) => {
+ const sendMessage = useCallback(async (content, type = 'text', replyTo = null, file = null) => {
     const socket = getSocket();
-    if (!socket || !activeConversation) return;
+    if (!activeConversation) return;
+
     const tempId = Date.now().toString();
     const tempMsg = {
       _id: tempId, tempId, content, type,
@@ -151,27 +152,35 @@ export const ChatProvider = ({ children }) => {
       replyTo, reactions: [], isPending: true,
     };
     setMessages(prev => [...prev, tempMsg]);
-    socket.emit('send_message', { conversationId: activeConversation._id, content, type, replyTo, tempId });
-  }, [activeConversation, user]);
 
-  const createConversation = useCallback(async (data) => {
-    const { data: res } = await conversationAPI.createConversation(data);
-    setConversations(prev => {
-      const exists = prev.find(c => c._id === res.conversation._id);
-      if (exists) return prev;
-      return [res.conversation, ...prev];
-    });
-    return res.conversation;
-  }, []);
-
-  return (
-    <ChatContext.Provider value={{
-      conversations, activeConversation, messages, typingUsers,
-      onlineUsers, loadingMessages, hasMore, page,
-      selectConversation, sendMessage, createConversation,
-      fetchConversations, loadMessages, setMessages,
-    }}>
-      {children}
-    </ChatContext.Provider>
-  );
-};
+    try {
+      if (file) {
+        // ✅ File hai tो API se bhejo
+        const fd = new FormData();
+        fd.append('conversationId', activeConversation._id);
+        fd.append('file', file);
+        if (content) fd.append('content', content);
+        if (replyTo) fd.append('replyTo', replyTo);
+        fd.append('tempId', tempId);
+        const { data } = await messageAPI.sendMessage(fd);
+        // Socket se baaki users ko notify karo
+        socket?.emit('send_message', { 
+          conversationId: activeConversation._id, 
+          messageId: data.message._id,
+          tempId 
+        });
+        // Temp message replace karo
+        setMessages(prev => prev.map(m => m.tempId === tempId ? data.message : m));
+      } else {
+        // ✅ Text message socket se bhejo
+        socket?.emit('send_message', { 
+          conversationId: activeConversation._id, 
+          content, type, replyTo, tempId 
+        });
+      }
+    } catch (error) {
+      // Failed — temp message hatao
+      setMessages(prev => prev.filter(m => m.tempId !== tempId));
+      toast.error('Message send failed');
+    }
+  }, [activeConversation, user])};
