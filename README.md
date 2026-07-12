@@ -1,6 +1,16 @@
 # 💬 ChatApp — Real-Time Messaging Platform
 
-A production-quality WhatsApp Web–inspired chat application built with React, Node.js, Socket.IO, MongoDB, and JWT Authentication.
+A production-quality WhatsApp Web–inspired chat application built with React, Node.js, Socket.IO, MongoDB, and Cloudinary.
+
+---
+
+## 🚀 Live Demo
+
+🌐 **Application**
+https://chatapp-akbarnuman.vercel.app
+
+🔗 **Backend API**
+https://chatapp-sim5.onrender.com
 
 ---
 
@@ -15,7 +25,7 @@ A production-quality WhatsApp Web–inspired chat application built with React, 
 - 🔔 Unread message counts
 
 ### Messages
-- 📷 Image sharing
+- 📷 Image sharing (Cloudinary)
 - 📎 File attachments
 - 🎤 Voice messages (hold-to-record)
 - ↩️ Reply to specific messages
@@ -30,7 +40,7 @@ A production-quality WhatsApp Web–inspired chat application built with React, 
 - ✏️ Edit group name & avatar
 
 ### Profile
-- 🖼️ Profile picture upload
+- 🖼️ Profile picture upload (Cloudinary)
 - ✏️ Edit username & bio
 - 🚫 Block / unblock users
 
@@ -54,10 +64,10 @@ A production-quality WhatsApp Web–inspired chat application built with React, 
 | Real-time | Socket.IO |
 | Auth | JWT + Bcrypt |
 | Database | MongoDB + Mongoose |
-| File Upload | Multer |
+| File Storage | Cloudinary |
+| File Upload | Multer + multer-storage-cloudinary |
 | Security | Helmet, express-rate-limit |
-| DevOps | Docker, Docker Compose |
-| Testing | Jest, Supertest |
+| Deployment | Vercel (Frontend), Render (Backend) |
 
 ---
 
@@ -73,7 +83,6 @@ chatapp/
 │   ├── models/           # Mongoose schemas
 │   ├── routes/           # API routes
 │   ├── socket/           # Socket.IO event handlers
-│   ├── uploads/          # Uploaded files (gitignored)
 │   ├── server.js         # Entry point
 │   └── .env.example
 ├── frontend/
@@ -86,7 +95,6 @@ chatapp/
 │       ├── context/      # AuthContext, ChatContext
 │       ├── pages/        # AuthPage, ChatPage
 │       └── services/     # API client, Socket service
-├── docker-compose.yml
 └── README.md
 ```
 
@@ -97,34 +105,23 @@ chatapp/
 ### Prerequisites
 - Node.js 18+
 - MongoDB (local or Atlas)
+- Cloudinary account (free)
 - npm or yarn
 
 ### 1. Clone & setup environment
 
 ```bash
-git clone <your-repo>
+git clone https://github.com/akbarnuman/chatapp
 cd chatapp
-
-# Backend
-cp backend/.env.example backend/.env
-# Edit backend/.env with your values
-
-# Frontend
-cp frontend/.env.example frontend/.env
 ```
 
 ### 2. Backend
 
 ```bash
 cd backend
-npm install
+npm install --legacy-peer-deps
 npm run dev
-
 # Runs on http://localhost:5000
-# runs live on https://chatapp-sim5.onrender.com
-
-
-
 ```
 
 ### 3. Frontend
@@ -138,33 +135,46 @@ npm start
 
 ---
 
-## 🐳 Docker
+## ⚙️ Environment Variables
 
-```bash
-# Build and run everything
-docker-compose up --build
-
-# Stop
-docker-compose down
-
-# With volumes removed
-docker-compose down -v
+### Backend (`backend/.env`)
+```
+PORT=5000
+MONGODB_URI=your_mongodb_atlas_uri
+JWT_SECRET=your_super_secret_key
+JWT_EXPIRE=7d
+CLIENT_URL=http://localhost:3000
+NODE_ENV=development
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-Services:
-- Frontend: chatapp-akbarnuman.vercel.app
-- Backend: https://chatapp-sim5.onrender.com
-- MongoDB: localhost:27017
+### Frontend (`frontend/.env`)
+```
+REACT_APP_API_URL=https://chatapp-sim5.onrender.com/api
+REACT_APP_SOCKET_URL=https://chatapp-sim5.onrender.com
+```
 
 ---
 
-## 🧪 Tests
+## 🌐 Deployment
 
-```bash
-cd backend
-npm test               # Run all tests
-npm test -- --coverage # With coverage report
-```
+### Frontend → Vercel
+1. Connect GitHub repo to Vercel
+2. Set Root Directory: `frontend`
+3. Add environment variables:
+   ```
+   REACT_APP_API_URL=https://your-backend.onrender.com/api
+   REACT_APP_SOCKET_URL=https://your-backend.onrender.com
+   ```
+
+### Backend → Render
+1. Create a new Web Service on Render
+2. Connect GitHub repo, set root to `backend/`
+3. Build command: `npm install --legacy-peer-deps`
+4. Start command: `node server.js`
+5. Add environment variables from `.env.example`
 
 ---
 
@@ -185,15 +195,6 @@ npm test -- --coverage # With coverage report
 | GET | `/api/users/:id` | ✅ | Get user by ID |
 | PUT | `/api/users/:id` | ✅ | Update profile |
 | POST | `/api/users/:id/block` | ✅ | Block/unblock user |
-
-### Conversations
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/conversations` | ✅ | Get all conversations |
-| POST | `/api/conversations` | ✅ | Create DM or group |
-| PUT | `/api/conversations/:id` | ✅ | Update group info |
-| POST | `/api/conversations/:id/members` | ✅ | Add member |
-| DELETE | `/api/conversations/:id/members/:userId` | ✅ | Remove member |
 
 ### Messages
 | Method | Endpoint | Auth | Description |
@@ -225,7 +226,6 @@ npm test -- --coverage # With coverage report
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `receive_message` | `Message` | New message received |
-| `conversation_updated` | `{ conversationId, lastMessage, unreadCount }` | Conversation updated |
 | `user_online` | `{ userId }` | User came online |
 | `user_offline` | `{ userId, lastSeen }` | User went offline |
 | `typing` | `{ userId, username, conversationId }` | User typing |
@@ -233,6 +233,16 @@ npm test -- --coverage # With coverage report
 | `message_read` | `{ conversationId, messageIds, readBy }` | Messages read |
 | `reaction_updated` | `{ messageId, reactions }` | Reactions updated |
 | `message_deleted` | `{ messageId, forEveryone }` | Message deleted |
+
+---
+
+## 🔒 Security Features
+- Passwords hashed with bcrypt (12 rounds)
+- JWT tokens with expiry
+- Rate limiting on auth endpoints (100 req/15min)
+- Helmet.js security headers
+- CORS configured for specific origins
+- File upload type validation & size limits
 
 ---
 
@@ -247,71 +257,22 @@ profilePicture, bio, lastSeen, isOnline, blockedUsers[], createdAt
 ### Conversation
 ```
 _id, participants[], isGroup, groupName, groupAvatar,
-groupAdmin, admins[], lastMessage, pinnedMessages[],
-mutedBy[], unreadCount{userId: count}, createdAt, updatedAt
+groupAdmin, lastMessage, pinnedMessages[],
+unreadCount{userId: count}, createdAt, updatedAt
 ```
 
 ### Message
 ```
 _id, sender, conversationId, content, type (text|image|file|voice|system),
-fileUrl, fileName, fileSize, mimeType, duration, status (sent|delivered|read),
-readBy[{user, readAt}], deliveredTo[], replyTo, reactions[{emoji, users[]}],
-isPinned, isDeleted, deletedFor[], editedAt, createdAt
+fileUrl, fileName, fileSize, mimeType, status (sent|delivered|read),
+readBy[{user, readAt}], replyTo, reactions[{emoji, users[]}],
+isPinned, isDeleted, deletedFor[], createdAt
 ```
 
 ---
 
-## 🌐 Deployment
+## 👨‍💻 Author
 
-### Frontend → Vercel
-```bash
-cd frontend
-npm run build
-# Connect GitHub repo to Vercel, set env vars:
-# REACT_APP_API_URL=https://your-backend.onrender.com/api
-# REACT_APP_SOCKET_URL=https://your-backend.onrender.com
-```
+**Md Akbar Ansari**
 
-### Backend → Render
-1. Create a new Web Service on Render
-2. Connect your GitHub repo, set root to `backend/`
-3. Build command: `npm install`
-4. Start command: `node server.js`
-5. Add environment variables from `.env.example`
-6. Use MongoDB Atlas for `MONGODB_URI`
-
----
-
-## ⚙️ Environment Variables
-
-### Backend (`backend/.env`)
-```
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/chatapp
-JWT_SECRET=your_super_secret_key
-JWT_EXPIRE=7d
-CLIENT_URL=http://localhost:3000
-NODE_ENV=development
-```
-
-### Frontend (`frontend/.env`)
-```
-REACT_APP_API_URL=https://chatapp-sim5.onrender.com/api
-REACT_APP_SOCKET_URL=https://chatapp-sim5.onrender.com
-```
-
----
-
-## 🔒 Security Features
-- Passwords hashed with bcrypt (12 rounds)
-- JWT tokens with expiry
-- Rate limiting on auth endpoints (100 req/15min)
-- Helmet.js security headers
-- CORS configured for specific origins
-- File upload type validation & size limits
-- Input validation with express-validator
-
----
-
-## 📄 License
-MIT
+If you found this project interesting, consider giving it a ⭐ on GitHub.
