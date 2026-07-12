@@ -152,7 +152,7 @@ docker-compose down -v
 ```
 
 Services:
-- Frontend: http://localhost:3000
+- Frontend: [http://localhost:3000](https://chatapp-akbarnuman.vercel.app/)
 - Backend: https://chatapp-sim5.onrender.com
 - MongoDB: localhost:27017
 
