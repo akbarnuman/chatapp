@@ -28,7 +28,7 @@ const io = new Server(httpServer, {
   cors: {
     origin: [
   'http://localhost:3000',
-  'https://chatapp-iota-henna.vercel.app'
+  'https://chatapp-iota-henna.vercel.app',
   'https://chatapp-akbarnuman.vercel.app'
 ],
     methods: ['GET', 'POST'],
@@ -50,7 +50,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin: [
   'http://localhost:3000',
-  'https://chatapp-iota-henna.vercel.app'
+  'https://chatapp-iota-henna.vercel.app',
   'https://chatapp-akbarnuman.vercel.app'
 ],
   credentials: true,
