@@ -10,21 +10,16 @@ import './index.css';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ChatProvider>
-          <Toaster position="top-center" toastOptions={{
-            style: { background: '#1f2937', color: '#f9fafb', border: '1px solid #374151' },
-            success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-            error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-          }}/>
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ChatProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <div style={{
+      background: "black",
+      color: "white",
+      height: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "40px"
+    }}>
+      CHAT APP WORKING
+    </div>
   );
 }

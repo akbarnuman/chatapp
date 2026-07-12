@@ -148,8 +148,8 @@ const seekAudio = (e) => {
           {message.isDeleted ? (
             <span className="flex items-center gap-1">🚫 This message was deleted</span>
           ) : message.type === 'image' ? (
-            <a href={`${UPLOADS}${message.fileUrl}`} target="_blank" rel="noreferrer">
-              <img src={`${UPLOADS}${message.fileUrl}`} alt="img" className="max-w-[240px] rounded-xl cursor-pointer hover:opacity-90 transition" />
+            <a href={message.fileUrl} target="_blank" rel="noreferrer">
+              <img src={message.fileUrl} alt="img" className="max-w-[240px] rounded-xl cursor-pointer hover:opacity-90 transition" />
             </a>
           ) : message.type === 'voice' ? (
             <div className="flex items-center gap-2 min-w-[220px]">
@@ -197,7 +197,7 @@ opacity: i < progress/3 ? 1 : 0.4
 <audio
   ref={audioRef}
   preload="metadata"
-  src={`${UPLOADS}${message.fileUrl}`}
+  src={message.fileUrl}
   onLoadedMetadata={(e) => {
     const d = e.currentTarget.duration;
 
@@ -217,7 +217,7 @@ opacity: i < progress/3 ? 1 : 0.4
   
 </div>
           ) : message.type === 'file' ? (
-            <a href={`${UPLOADS}${message.fileUrl}`} download={message.fileName} className="flex items-center gap-2 hover:underline">
+            <a href={message.fileUrl}download={message.fileName} className="flex items-center gap-2 hover:underline">
               <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
               </svg>
